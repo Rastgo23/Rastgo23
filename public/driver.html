@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RIDEX Driver App</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>RIDEX Driver App</h1>
+    <nav><a href="/">Home</a><a href="/passenger.html">Passenger</a><a href="/admin.html">Admin</a></nav>
+  </header>
+  <main class="grid">
+    <section class="card">
+      <h2>Driver registration & ride decisions</h2>
+      <div id="driver-cards" class="list"></div>
+    </section>
+    <section class="card">
+      <h2>GPS navigation preview</h2>
+      <div id="driver-map" class="map"></div>
+      <p class="muted">Accepted driver sees pickup and destination path for navigation.</p>
+    </section>
+    <section class="card">
+      <h2>Earnings dashboard</h2>
+      <div id="earnings" class="list"></div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+  <script>
+    (async () => {
+      const state = await window.ridex.fetchState();
+      const passenger = state.passengers[0];
+      const matchResponse = await fetch(`/api/passengers/${passenger.id}/matches`);
+      const matchData = await matchResponse.json();
+      const selectedDriver = matchData.matches[0];
+
+      document.getElementById('driver-cards').innerHTML = matchData.matches.map((driver, index) => `
+        <div class="list-item">
+          <strong>${driver.name}</strong>
+          <p class="muted">Registration status: active • ${driver.vehicle}</p>
+          <p>Request from ${passenger.name}: fare ${driver.estimatedFare.toLocaleString()} IQD</p>
+          <p>${index === 0 ? 'Suggested first because it is the closest available driver.' : 'Driver can accept or reject this request.'}</p>
+          <button>${index === 0 ? 'Accept ride' : 'Reject / Skip'}</button>
+        </div>`).join('');
+
+      document.getElementById('earnings').innerHTML = state.drivers.map((driver) => `
+        <div class="list-item">
+          <strong>${driver.name}</strong>
+          <p>Earnings: ${driver.earnings.toLocaleString()} IQD</p>
+          <p>Completed trips: ${driver.completedTrips}</p>
+          <p>Status: ${driver.status}</p>
+        </div>`).join('');
+
+      window.ridex.renderMap(document.getElementById('driver-map'), [
+        { type: 'driver', label: selectedDriver.name, coords: selectedDriver.location },
+        { type: 'passenger', label: passenger.name, coords: passenger.location },
+        { type: 'destination', label: passenger.destination.label, coords: passenger.destination },
+      ]);
+    })();
+  </script>
+</body>
+</html>

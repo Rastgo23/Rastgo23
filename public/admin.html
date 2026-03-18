@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RIDEX Admin Panel</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>RIDEX Admin Panel</h1>
+    <nav><a href="/">Home</a><a href="/passenger.html">Passenger</a><a href="/driver.html">Driver</a></nav>
+  </header>
+  <main class="grid">
+    <section class="card">
+      <h2>Platform analytics</h2>
+      <div id="analytics" class="list"></div>
+    </section>
+    <section class="card">
+      <h2>Trip log</h2>
+      <table class="table" id="trip-table"></table>
+    </section>
+    <section class="card">
+      <h2>Driver performance</h2>
+      <div id="driver-performance" class="list"></div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+  <script>
+    (async () => {
+      const state = await window.ridex.fetchState();
+      const analytics = state.analytics;
+
+      document.getElementById('analytics').innerHTML = `
+        <div class="list-item"><strong>Total passengers</strong><p>${analytics.totalPassengers}</p></div>
+        <div class="list-item"><strong>Total drivers</strong><p>${analytics.totalDrivers}</p></div>
+        <div class="list-item"><strong>Completed trips</strong><p>${analytics.completedTrips}</p></div>
+        <div class="list-item"><strong>Total revenue</strong><p>${analytics.totalRevenue.toLocaleString()} IQD</p></div>`;
+
+      document.getElementById('trip-table').innerHTML = `
+        <tr><th>Trip</th><th>Passenger</th><th>Driver</th><th>Status</th><th>Fare</th></tr>
+        ${state.trips.map((trip) => `
+          <tr>
+            <td>${trip.id}</td>
+            <td>${trip.passengerId}</td>
+            <td>${trip.driverId}</td>
+            <td>${trip.status}</td>
+            <td>${trip.fare.toLocaleString()} IQD</td>
+          </tr>`).join('')}`;
+
+      document.getElementById('driver-performance').innerHTML = analytics.driverPerformance.map((driver) => `
+        <div class="list-item">
+          <strong>${driver.name}</strong>
+          <p>Status: ${driver.status}</p>
+          <p>Earnings: ${driver.earnings.toLocaleString()} IQD</p>
+          <p>Completed trips: ${driver.completedTrips}</p>
+        </div>`).join('');
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RIDEX Passenger App</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>RIDEX Passenger App</h1>
+    <nav><a href="/">Home</a><a href="/driver.html">Driver</a><a href="/admin.html">Admin</a></nav>
+  </header>
+  <main class="grid">
+    <section class="card">
+      <h2>Easy sign-up & booking</h2>
+      <div id="passenger-list" class="list"></div>
+    </section>
+    <section class="card">
+      <h2>Live driver tracking</h2>
+      <div id="passenger-map" class="map"></div>
+      <p class="muted">Green = passenger, Orange = nearby drivers, Red = destination C.</p>
+    </section>
+    <section class="card">
+      <h2>Ride offers around 500m</h2>
+      <div id="match-list" class="list"></div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+  <script>
+    (async () => {
+      const state = await window.ridex.fetchState();
+      const passenger = state.passengers[0];
+      const matchResponse = await fetch(`/api/passengers/${passenger.id}/matches`);
+      const matchData = await matchResponse.json();
+
+      document.getElementById('passenger-list').innerHTML = `
+        <div class="list-item">
+          <strong>${passenger.name}</strong>
+          <p class="muted">Pickup: ${passenger.location.label} → Destination: ${passenger.destination.label}</p>
+          <p>Payment options: ${passenger.paymentOptions.join(', ')}</p>
+          <span class="tag">Estimated Fare: ${matchData.tripFare.toLocaleString()} IQD</span>
+          <span class="tag">Live booking enabled</span>
+        </div>`;
+
+      document.getElementById('match-list').innerHTML = matchData.matches.map((driver) => `
+        <div class="list-item">
+          <strong>${driver.name}</strong>
+          <p class="muted">${driver.vehicle} • ${driver.pickupDistance}m from pickup</p>
+          <p>Zone: ${driver.zone === 'priority' ? 'Priority within 500m' : 'Standby between 500m and 1km'}</p>
+          <p>Displayed fare to driver and passenger: ${driver.estimatedFare.toLocaleString()} IQD</p>
+        </div>`).join('');
+
+      window.ridex.renderMap(document.getElementById('passenger-map'), [
+        { type: 'passenger', label: passenger.name, coords: passenger.location },
+        { type: 'destination', label: passenger.destination.label, coords: passenger.destination },
+        ...matchData.matches.map((driver) => ({ type: 'driver', label: driver.name, coords: driver.location })),
+      ]);
+    })();
+  </script>
+</body>
+</html>

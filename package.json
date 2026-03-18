@@ -1,0 +1,11 @@
+{
+  "name": "ridex-demo",
+  "version": "1.0.0",
+  "description": "RIDEX taxi app demo with passenger, driver, and admin apps",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js && node --check src/data.js && node --check src/matching.js"
+  }
+}
